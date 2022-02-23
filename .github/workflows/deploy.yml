@@ -25,7 +25,7 @@ jobs:
       - name: Import environment variables from a file
         uses: c-py/action-dotenv-to-setenv@v3
         with:
-          env-file: ${{ ENV_FILE }}
+          env-file: ${{ env.ENV_FILE }}
 
       - name: Fail if tag and version are not consistent
         uses: cutenode/action-always-fail@v1.0.1
@@ -51,7 +51,7 @@ jobs:
       - name: Import environment variables from a file
         uses: c-py/action-dotenv-to-setenv@v3
         with:
-          env-file: ${{ ENV_FILE }}
+          env-file: ${{ env.ENV_FILE }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
