@@ -1,0 +1,86 @@
+name: Deploy
+
+on:
+  release:
+    types:
+      - created
+
+env:
+  ENV_FILE: deploy.env
+  # GitHub
+  DOCKER_REGISTRY: ghcr.io
+  DOCKER_USER: ${{ github.actor }}
+  DOCKER_SECRET: ${{ secrets.GITHUB_TOKEN }}
+  # Repo
+  DOCKER_NAMESPACE: ${{ github.repository }} # <account>/<repo>
+
+jobs:
+  build:
+    if: ${{ startsWith(github.ref, 'refs/tags/v') }} # on tag creation filter
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v2
+
+      - name: Import environment variables from a file
+        uses: c-py/action-dotenv-to-setenv@v3
+        with:
+          env-file: ${{ ENV_FILE }}
+
+      - name: Fail if tag and version are not consistent
+        uses: cutenode/action-always-fail@v1.0.1
+        if: ${{ env.APP_VERSION != github.event.release.tag_name }}
+
+      - name: Check version
+        run: |
+          echo "Version: ${{ github.event.release.tag_name }}"
+          echo "Image: ghcr.io/${{ github.repository }}:${{ env.APP_IMAGE_TAG }}"
+
+      - name: Dump context
+        if: always()
+        uses: crazy-max/ghaction-dump-context@v1
+
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v2
+
+      - name: Import environment variables from a file
+        uses: c-py/action-dotenv-to-setenv@v3
+        with:
+          env-file: ${{ ENV_FILE }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login to GitHub
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.DOCKER_REGISTRY }}
+          username: ${{ env.DOCKER_USER }}
+          password: ${{ env.DOCKER_SECRET }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          build-args: |
+            PHUSION_REGISTRY=${{ env.PHUSION_REGISTRY }}
+            PHUSION_TAG=${{ env.PHUSION_TAG }}
+            PG_MAJOR=${{ env.PG_MAJOR }}
+            WALG_RELEASE=${{ env.WALG_RELEASE }}
+          tags: |
+            ${{ env.GH_IMAGE_NAME }}:${{ env.GH_IMAGE_TAG }}
+        env:
+          GH_IMAGE_NAME: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_NAMESPACE }}
+          GH_IMAGE_TAG: ${{ env.APP_VERSION }}-pg-${{ env.PG_MAJOR }}
+
+      - name: Dump context
+        if: always()
+        uses: crazy-max/ghaction-dump-context@v1
+
