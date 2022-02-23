@@ -1,0 +1,102 @@
+name: Release
+
+on:
+  workflow_dispatch: # TODO: test-only, delete me
+  push:
+    branches:
+      - master
+    paths:
+      - script/**
+      - config/**
+      - Dockerfile
+      - deploy.env
+
+jobs:
+  do-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.head_ref }}
+
+      - name: Import environment variables from a file
+        uses: c-py/action-dotenv-to-setenv@v3
+        with:
+          env-file: deploy.env
+
+      - uses: bbonkr/git-tag-check-action@v1.0.7
+        id: git_tag_check
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ env.APP_VERSION }}
+
+      - name: Evaluate tag presence
+        id: git_tag_check_eval
+        shell: bash
+        run: |
+          if [[ "-${{ steps.git_tag_check.outputs.tag }}" == "-" ]]; then
+            echo ::set-output name=exists::false
+          else
+            echo ::set-output name=exists::true
+          fi
+
+      - name: Log git_tag_check result
+        run: |
+          echo "> Current: '${{ env.APP_VERSION }}'"
+          echo "> Result:  '${{ steps.git_tag_check.outputs.tag }}'"
+          echo "> Evaluated: ${{ steps.git_tag_check_eval.outputs.exists }}"
+
+      - name: Bump release version
+        id: bump_version
+        uses: christian-draeger/increment-semantic-version@1.0.2
+        with:
+          current-version: ${{ env.VERSION }}
+          version-fragment: 'bug'
+        if: ${{ fromJSON( steps.git_tag_check_eval.outputs.exists ) }}
+
+      - name: Find and Replace
+        uses: jacobtomlinson/gha-find-replace@v2
+        with:
+          find: '^VERSION=.*'
+          replace: VERSION=${{ env.NEXT_VERSION }}
+          regex: true
+          include: deploy.env
+        if: ${{ fromJSON( steps.git_tag_check_eval.outputs.exists ) }}
+        env:
+          NEXT_VERSION: ${{ steps.bump_version.outputs.next-version }}
+
+      - name: Refresh variables from a file
+        uses: c-py/action-dotenv-to-setenv@v3
+        with:
+          env-file: deploy.env
+        if: ${{ fromJSON( steps.git_tag_check_eval.outputs.exists ) }}
+
+      - name: Print version
+        run: |
+          echo "Version: ${{ env.APP_VERSION }}"
+
+      - name: Commit version upgrade
+        uses: EndBug/add-and-commit@v8
+        id: git_rel_commit
+        with:
+          add: deploy.env
+          tag: ${{ env.APP_VERSION }}
+          message: "[release] Upgrade version to ${{ env.VERSION }}"
+          committer_name: GitHub Actions
+          committer_email: actions@github.com
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_RELEASE_TOKEN }}
+        with:
+          tag_name: ${{ env.APP_VERSION }}
+          release_name: Release ${{ env.APP_VERSION }}
+          draft: false
+          prerelease: false
+
+      - name: Dump context
+        uses: crazy-max/ghaction-dump-context@v1
+        if: always()
