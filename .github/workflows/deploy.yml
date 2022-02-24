@@ -36,10 +36,25 @@ jobs:
           echo "Version: ${{ github.event.release.tag_name }}"
           echo "Image: ghcr.io/${{ github.repository }}:${{ env.APP_IMAGE_TAG }}"
 
+      - name: Exports Postgres majors
+        id: pg_major
+        run: |
+          echo ::set-output name=list::[${{ env.PG_MAJOR_LIST }}]
+
       - name: Dump context
         uses: crazy-max/ghaction-dump-context@v1
         if: always()
 
+  pub-matrix:
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        pg_major: ${{ fromJSON( steps.pg_major.outputs.list ) }}
+    steps:
+      - name: Print Postgres major
+        run: |
+          echo  ${{ matrix.pg_major}}
 
   publish:
     needs: build
@@ -54,7 +69,10 @@ jobs:
           env-file: ${{ env.ENV_FILE }}
 
       - name: Set up Docker Buildx
+        id: buildx
         uses: docker/setup-buildx-action@v1
+        with:
+          install: true
 
       - name: Cache Docker layers
         uses: actions/cache@v2
@@ -65,7 +83,7 @@ jobs:
             ${{ runner.os }}-buildx-pg-${{ env.PG_MAJOR }}
 
       - name: Login to GitHub
-        uses: docker/login-action@v1
+        uses: docker/login-action@v1.13.0
         with:
           registry: ${{ env.DOCKER_REGISTRY }}
           username: ${{ env.DOCKER_USER }}
@@ -87,6 +105,7 @@ jobs:
             ${{ env.GH_IMAGE_NAME }}:pg-${{ env.PG_MAJOR }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,mode=max,dest=/tmp/.buildx-cache-new
+          builder: ${{ steps.buildx.outputs.name }}
         env:
           GH_IMAGE_NAME: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_NAMESPACE }}
             
