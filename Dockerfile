@@ -98,4 +98,4 @@ LABEL org.opencontainers.image.version="${APP_VERSION}" \
       org.opencontainers.image.title='Ubuntu fat image with Patroni, Postgres and WAL-G' \
       org.opencontainers.image.source='https://github.com/rrredbeard/patroni-consul-pg-walg' \
       org.opencontainers.image.base.name="${PHUSION_REGISTRY}/phusion/baseimage:${PHUSION_TAG}" \
-      org.opencontainers.image.description="Image based on phusion/baseimage containing Postgres ${PG_MAJOR}, WAL-G ${WALG_RELEASE} and Patroni that supports only Consul as key/value store"
+      org.opencontainers.image.description="Image based on 'phusion/baseimage' containing Postgres ${PG_MAJOR}, WAL-G ${WALG_RELEASE} and Patroni that supports only Consul as key/value store"
