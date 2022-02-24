@@ -1,7 +1,7 @@
 ARG PHUSION_REGISTRY='docker.io'
 ARG PHUSION_TAG='focal-1.1.0'
 
-FROM $PHUSION_REGISTRY/phusion/baseimage:$PHUSION_TAG
+FROM --platform=amd64 $PHUSION_REGISTRY/phusion/baseimage:$PHUSION_TAG
 
 MAINTAINER Andy Fefelov <andy@mastery.pro>
 
