@@ -96,8 +96,8 @@ jobs:
             ${{ env.GH_IMAGE_NAME }}:${{ env.APP_VERSION }}-pg-${{ matrix.pg_major }}
             ${{ env.GH_IMAGE_NAME }}:pg-${{ matrix.pg_major }}
           builder: ${{ steps.buildx.outputs.name }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=registry,ref=${{ env.GH_IMAGE_NAME }}:build-cache-pg-${{ matrix.pg_major }}
+          cache-to: type=registry,mode=max,ref=${{ env.GH_IMAGE_NAME }}:build-cache-pg-${{ matrix.pg_major }}
         env:
           GH_IMAGE_NAME: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_NAMESPACE }}
 

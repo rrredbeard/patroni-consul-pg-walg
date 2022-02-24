@@ -8,12 +8,6 @@ MAINTAINER Andy Fefelov <andy@mastery.pro>
 ARG PG_MAJOR='11'
 ARG WALG_RELEASE='v1.1'
 
-ARG APP_VERSION='v0.0.0'
-
-# after FROM args are empty
-ARG PHUSION_REGISTRY='docker.io'
-ARG PHUSION_TAG='focal-1.1.0'
-
 SHELL ["/bin/bash", "-c"]
 
 ENV DEBIAN_FRONTEND noninteractive
@@ -90,6 +84,15 @@ ENV PGDATA /var/lib/postgresql/data
 
 HEALTHCHECK --interval=10s --timeout=30s --start-period=30s \
   CMD curl -fs http://localhost:8008/health || exit 1
+
+
+#### moved here to optimize layer caching
+
+ARG APP_VERSION='v0.0.0'
+
+# after FROM args are empty
+ARG PHUSION_REGISTRY='docker.io'
+ARG PHUSION_TAG='focal-1.1.0'
 
 LABEL org.opencontainers.image.version="${APP_VERSION}" \
       org.opencontainers.image.title='Ubuntu fat image with Patroni, Postgres and WAL-G' \
