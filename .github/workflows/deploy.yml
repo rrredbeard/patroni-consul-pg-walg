@@ -47,7 +47,7 @@ jobs:
         uses: crazy-max/ghaction-dump-context@v1
         if: always()
 
-  pub-matrix:
+  publish-x:
     needs: build
     runs-on: ubuntu-latest
     strategy:
@@ -56,12 +56,8 @@ jobs:
     steps:
       - name: Print Postgres major
         run: |
-          echo  ${{ matrix.pg_major}}
+          echo Postgres ${{ matrix.pg_major }}
 
-  publish:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
       - name: Checkout project
         uses: actions/checkout@v2
 
@@ -83,14 +79,6 @@ jobs:
           username: ${{ env.DOCKER_USER }}
           password: ${{ env.DOCKER_SECRET }}
 
-      - name: Cache Docker layers
-        uses: actions/cache@v2
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-pg-${{ env.PG_MAJOR }}-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-pg-${{ env.PG_MAJOR }}
-
       - name: Build and push
         uses: docker/build-push-action@v2
         with:
@@ -100,26 +88,14 @@ jobs:
           build-args: |
             PHUSION_REGISTRY=${{ env.PHUSION_REGISTRY }}
             PHUSION_TAG=${{ env.PHUSION_TAG }}
-            PG_MAJOR=${{ env.PG_MAJOR }}
+            PG_MAJOR=${{ matrix.pg_major }}
             WALG_RELEASE=${{ env.WALG_RELEASE }}
           tags: |
-            ${{ env.GH_IMAGE_NAME }}:${{ env.APP_VERSION }}-pg-${{ env.PG_MAJOR }}
-            ${{ env.GH_IMAGE_NAME }}:pg-${{ env.PG_MAJOR }}
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,mode=max,dest=/tmp/.buildx-cache-new
+            ${{ env.GH_IMAGE_NAME }}:${{ env.APP_VERSION }}-pg-${{ matrix.pg_major }}
+            ${{ env.GH_IMAGE_NAME }}:pg-${{ matrix.pg_major }}
           builder: ${{ steps.buildx.outputs.name }}
         env:
           GH_IMAGE_NAME: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_NAMESPACE }}
-            
-      # This ugly bit is necessary if you don't want your cache to grow forever
-      # till it hits GitHub's limit of 5GB.
-      # Temp fix
-      # https://github.com/docker/build-push-action/issues/252
-      # https://github.com/moby/buildkit/issues/1896
-      - name: Move cache
-        run: |
-          rm -rf /tmp/.buildx-cache
-          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
       - name: Dump context
         uses: crazy-max/ghaction-dump-context@v1
