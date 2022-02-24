@@ -15,7 +15,7 @@ env:
   DOCKER_NAMESPACE: ${{ github.repository }} # <account>/<repo>
 
 jobs:
-  build:
+  prepare:
     if: ${{ startsWith(github.ref, 'refs/tags/v') }} # on tag creation filter
     runs-on: ubuntu-latest
     outputs:
@@ -48,11 +48,12 @@ jobs:
         if: always()
 
   publish-x:
-    needs: build
+    needs: prepare
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        pg_major: ${{ fromJSON( needs.build.outputs.majors ) }}
+        pg_major: ${{ fromJSON( needs.prepare.outputs.majors ) }}
     steps:
       - name: Print Postgres major
         run: |
