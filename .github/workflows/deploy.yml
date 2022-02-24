@@ -18,6 +18,8 @@ jobs:
   build:
     if: ${{ startsWith(github.ref, 'refs/tags/v') }} # on tag creation filter
     runs-on: ubuntu-latest
+    outputs:
+      majors: ${{ steps.pg_major.outputs.list }}
     steps:
       - name: Checkout project
         uses: actions/checkout@v2
@@ -50,7 +52,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        pg_major: ${{ fromJSON( steps.pg_major.outputs.list ) }}
+        pg_major: ${{ fromJSON( needs.build.outputs.majors ) }}
     steps:
       - name: Print Postgres major
         run: |
