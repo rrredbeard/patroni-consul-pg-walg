@@ -91,12 +91,16 @@ jobs:
             PHUSION_TAG=${{ env.PHUSION_TAG }}
             PG_MAJOR=${{ matrix.pg_major }}
             WALG_RELEASE=${{ env.WALG_RELEASE }}
+            APP_VERSION=${{ env.APP_VERSION }}
           tags: |
             ${{ env.GH_IMAGE_NAME }}:${{ env.APP_VERSION }}-pg-${{ matrix.pg_major }}
             ${{ env.GH_IMAGE_NAME }}:pg-${{ matrix.pg_major }}
           builder: ${{ steps.buildx.outputs.name }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
         env:
           GH_IMAGE_NAME: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_NAMESPACE }}
+
 
       - name: Dump context
         uses: crazy-max/ghaction-dump-context@v1

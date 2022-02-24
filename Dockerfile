@@ -8,6 +8,12 @@ MAINTAINER Andy Fefelov <andy@mastery.pro>
 ARG PG_MAJOR='11'
 ARG WALG_RELEASE='v1.1'
 
+ARG APP_VERSION='v0.0.0'
+
+# after FROM args are empty
+ARG PHUSION_REGISTRY='docker.io'
+ARG PHUSION_TAG='focal-1.1.0'
+
 SHELL ["/bin/bash", "-c"]
 
 ENV DEBIAN_FRONTEND noninteractive
@@ -81,3 +87,12 @@ RUN export TERM=xterm
 ENV PATH /usr/bin:$PATH
 ENV PATH /usr/lib/postgresql/$PG_MAJOR/bin:$PATH
 ENV PGDATA /var/lib/postgresql/data
+
+HEALTHCHECK --interval=10s --timeout=30s --start-period=30s \
+  CMD curl -fs http://localhost:8008/health || exit 1
+
+LABEL org.opencontainers.image.version="${APP_VERSION}" \
+      org.opencontainers.image.title='Ubuntu fat image with Patroni, Postgres and WAL-G' \
+      org.opencontainers.image.source='https://github.com/rrredbeard/patroni-consul-pg-walg' \
+      org.opencontainers.image.base.name="${PHUSION_REGISTRY}/phusion/baseimage:${PHUSION_TAG}" \
+      org.opencontainers.image.description="Image based on phusion/baseimage containing Postgres ${PG_MAJOR}, WAL-G ${WALG_RELEASE} and Patroni that supports only Consul as key/value store"
