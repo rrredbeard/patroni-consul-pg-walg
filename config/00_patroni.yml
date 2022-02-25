@@ -42,8 +42,10 @@ bootstrap:
     - data-checksums
 
   pg_hba:  # Add following lines to pg_hba.conf after running 'initdb'
-    - host replication replicator 0.0.0.0/0 md5
-    - host all postgres 0.0.0.0/0 md5
+    - host replication  replicator  0.0.0.0/0           md5
+    - host all          postgres    0.0.0.0/0           md5
+    - host all          all         192.168.0.0/16      md5
+    - host all          all         ::1/128             md5
 
   post_init: /usr/bin/patroni-post-init.sh
 
