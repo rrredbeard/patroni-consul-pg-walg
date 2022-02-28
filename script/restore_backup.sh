@@ -1,4 +1,11 @@
 #!/bin/bash
 set -e
+
 source /etc/container_environment.sh
-wal-g backup-fetch /var/lib/postgresql/data LATEST
+
+if [[ -z "$PGDATA" ]]; then
+	echo 'PGDATA is undefined'
+	exit 1
+fi
+
+wal-g backup-fetch "$PGDATA" LATEST

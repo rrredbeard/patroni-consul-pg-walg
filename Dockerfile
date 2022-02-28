@@ -63,6 +63,7 @@ ADD script/post-init.sh /usr/bin/patroni-post-init.sh
 ADD config/00_patroni.yml /var/lib/postgresql/patroni.yml
 
 RUN mkdir /post-init \
+    && chmod 755 /post-init \
     && chmod 777 /usr/bin/restore_command.sh \
     && chmod 777 /usr/bin/restore_backup.sh  \
     && chmod 755 /usr/bin/archive_command.sh \
@@ -71,16 +72,25 @@ RUN mkdir /post-init \
     && chmod 755 /var/lib/postgresql/patroni.yml
 
 # patroni staff
-RUN mkdir /etc/service/patroni
+RUN mkdir -p "/etc/service/patroni"
 ADD script/run-patroni.sh /etc/service/patroni/run
 
 RUN chmod 755 /etc/service/patroni/run
 
 RUN export TERM=xterm
 
-ENV PATH /usr/bin:$PATH
-ENV PATH /usr/lib/postgresql/$PG_MAJOR/bin:$PATH
-ENV PGDATA /var/lib/postgresql/data
+ENV PATH "/usr/bin:$PATH"
+ENV PATH "/usr/lib/postgresql/$PG_MAJOR/bin:$PATH"
+ENV PGDATA "/var/lib/postgresql/data/PGDATA"
+
+RUN set -o xtrace \
+    && mkdir -p "/var/lib/postgresql/data" \
+    && chown -R postgres:postgres "/var/lib/postgresql/data" \
+    && chmod -R 700 "/var/lib/postgresql/data"
+
+VOLUME ["/var/lib/postgresql/data"]
+
+EXPOSE 8008 5432
 
 HEALTHCHECK --interval=10s --timeout=30s --start-period=30s \
   CMD curl -fs http://localhost:8008/health || exit 1
