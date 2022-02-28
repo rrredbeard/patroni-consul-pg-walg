@@ -8,4 +8,15 @@ if [[ -z "$PGDATA" ]]; then
 	exit 1
 fi
 
+if  [[ -n "${PG_BACKUP-}" ]]; then
+
+	if [[ ! -d "$PG_BACKUP" ]]; then
+		mkdir -p "$PG_BACKUP"
+		chown -R postgres:postgres "$PG_BACKUP"
+		chmod -R 0700 "$PG_BACKUP"
+	fi
+
+	export WALG_FILE_PREFIX="$PG_BACKUP"
+fi
+
 wal-g backup-fetch "$PGDATA" LATEST

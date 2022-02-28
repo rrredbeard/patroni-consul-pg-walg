@@ -50,10 +50,6 @@ RUN set -o xtrace \
     && chmod +x /usr/bin/wal-g \
     && rm "wal-g-pg-ubuntu-$(lsb_release -rs)-amd64.tar.gz"
 
-# wal-g operational staff
-ENV WALG_S3_STORAGE_CLASS STANDARD_IA
-ENV WALG_COMPRESSION_METHOD lzma
-ENV WALG_UPLOAD_DISK_CONCURRENCY 5
 
 ADD script/archive_command.sh /usr/bin/archive_command.sh
 ADD script/perform_backup.sh /usr/bin/perform_backup.sh
@@ -82,11 +78,16 @@ RUN export TERM=xterm
 ENV PATH "/usr/bin:$PATH"
 ENV PATH "/usr/lib/postgresql/$PG_MAJOR/bin:$PATH"
 ENV PGDATA "/var/lib/postgresql/data/PGDATA"
+ENV PG_BACKUP "/var/lib/postgresql/data/backup"
 
 RUN set -o xtrace \
     && mkdir -p "/var/lib/postgresql/data" \
     && chown -R postgres:postgres "/var/lib/postgresql/data" \
     && chmod -R 700 "/var/lib/postgresql/data"
+
+# wal-g operational staff
+ENV WALG_COMPRESSION_METHOD lzma
+ENV WALG_UPLOAD_DISK_CONCURRENCY 5
 
 VOLUME ["/var/lib/postgresql/data"]
 
